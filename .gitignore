@@ -1,3 +1,2 @@
-vwap
-.vscode
-vwap.dSYM
+*
+!vwap.cpp
