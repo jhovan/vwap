@@ -1,8 +1,10 @@
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 
 int main() 
 {
-    cout << "hello world";
+    ifstream file;
+    file.open("input", ios::binary | ios::in);
 }
