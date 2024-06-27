@@ -1,3 +1,4 @@
-*
-!vwap.cpp
-!constants.h
+**/.*
+vwap.dSYM/
+input
+vwap
