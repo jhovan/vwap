@@ -65,6 +65,10 @@ class MessageStream
     void process_message (char* bytes, int size)
     {
         char type = bytes[2];
+        char message[size];
+        for (int i=0; i < size; i++) {
+            message[i] = bytes[i];
+        }
         if(counter_by_type.find(type) == counter_by_type.end())
         {
             counter_by_type[type] = 1;
@@ -73,7 +77,7 @@ class MessageStream
         {
             counter_by_type[type]++;
         }
-        uint64_t time = parse_uint<uint64_t>(&bytes[5], 6);
+        uint64_t time = parse_uint<uint64_t>(&bytes[7], 6);
     }
 
     void proccess_buffer ()
