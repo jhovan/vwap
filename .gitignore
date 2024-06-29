@@ -1,4 +1,5 @@
 **/.*
-vwap.dSYM/
+**/*.dSYM
 input
 vwap
+playground*
