@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <chrono>
 #include "constants.h"
-#include "parse_uint_util.h"
+#include "parse_util.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -130,7 +130,7 @@ public:
         file.open(file_name, ios::binary | ios::in);
     }
 
-    void get_next_transaction () 
+    void start_processing () 
     {
         while (!file.eof()) 
         {
@@ -145,7 +145,7 @@ int main()
     string file_name = "input";
     MessageStream ms{file_name};
     auto start = high_resolution_clock::now();
-    ms.get_next_transaction();
+    ms.start_processing();
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<minutes>(stop - start);
     cout << "Total: " << ms.counter << endl;
