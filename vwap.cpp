@@ -59,14 +59,14 @@ class MessageWrapper
 {
 
     const unordered_map<MessageAttribute, pair<uint8_t, uint8_t>>* attributes_map;
+    MessageType type;
     char* bytes;
-    char type;
 
     MessageWrapper () = delete;
 
     MessageWrapper (char* bytes): bytes{bytes} 
     {
-        type = bytes[0];
+        type = MessageType{bytes[0]};
         attributes_map = &GLOBAL_ATTRIBUTE_MAP.at(type);
     }
 
@@ -88,7 +88,7 @@ class MessageWrapper
 
 public:
 
-    char getType () const
+    MessageType getType () const
     {
         return type;
     }

@@ -13,8 +13,25 @@ inline const int MAX_MESSAGE_SIZE = 52;
 // Nanoseconds in 1 hour
 inline const u_int64_t  NANOSECONDS_IN_HOUR = 3600000000000;
 
+// Relevant Message 
+enum class MessageType:char 
+{
+    StockDirectory = 'R',
+    AddOrder = 'A',
+    AddOrderMPID = 'F',
+    OrderExecuted = 'E',
+    OrderExecutedWithPrice = 'C',
+    OrderCancel = 'X',
+    OrderDelete = 'D',
+    OrderReplace = 'U',
+    Trade = 'P',
+    CrossTrade = 'Q',
+    BrokenTrade = 'B'
+};
+
 // Relevant message attributes (similar names and data types grouped)
-enum class MessageAttribute:char {
+enum class MessageAttribute:char 
+{
     Timestamp,
     RefNo,
     NewRefNo,
@@ -28,10 +45,10 @@ enum class MessageAttribute:char {
 };
 
 // Relevant message attributes offsets and sizes by type
-inline const std::unordered_map<char,std::unordered_map<MessageAttribute, std::pair<uint8_t, uint8_t>>> GLOBAL_ATTRIBUTE_MAP = {
+inline const std::unordered_map<MessageType,std::unordered_map<MessageAttribute, std::pair<uint8_t, uint8_t>>> GLOBAL_ATTRIBUTE_MAP = {
     {
         // Stock Directory
-        'R', 
+        MessageType::StockDirectory, 
         {
             {MessageAttribute::StockLocale, {1, 2}},
             {MessageAttribute::Timestamp, {5, 6}},
@@ -39,7 +56,8 @@ inline const std::unordered_map<char,std::unordered_map<MessageAttribute, std::p
         },
     },
     {
-        'A', 
+        // Add Order – No MPID Attribution
+        MessageType::AddOrder, 
         {
             {MessageAttribute::StockLocale, {1, 2}},
             {MessageAttribute::Timestamp, {5, 6}},
@@ -50,7 +68,7 @@ inline const std::unordered_map<char,std::unordered_map<MessageAttribute, std::p
     },
     {
         // Add Order with MPID Attribution
-        'F', 
+        MessageType::AddOrderMPID, 
         {
             {MessageAttribute::StockLocale, {1, 2}},
             {MessageAttribute::Timestamp, {5, 6}},
@@ -61,7 +79,7 @@ inline const std::unordered_map<char,std::unordered_map<MessageAttribute, std::p
     },
     {
         // Order ExecutedMessage
-        'E', 
+        MessageType::OrderExecuted, 
         {
             {MessageAttribute::Timestamp, {5, 6}},
             {MessageAttribute::RefNo, {11, 8}},
@@ -71,7 +89,7 @@ inline const std::unordered_map<char,std::unordered_map<MessageAttribute, std::p
     },
     {
         // Order Executed With PriceMessage
-        'C', 
+        MessageType::OrderExecutedWithPrice, 
         {
             {MessageAttribute::Timestamp, {5, 6}},
             {MessageAttribute::RefNo, {11, 8}},
@@ -83,7 +101,7 @@ inline const std::unordered_map<char,std::unordered_map<MessageAttribute, std::p
     },
     {
         // Order Cancel Message
-        'X', 
+        MessageType::OrderCancel, 
         {
             {MessageAttribute::Timestamp, {5, 6}},
             {MessageAttribute::RefNo, {11, 8}},
@@ -92,7 +110,7 @@ inline const std::unordered_map<char,std::unordered_map<MessageAttribute, std::p
     },
     {
         // Order Delete Message
-        'D', 
+        MessageType::OrderDelete, 
         {
             {MessageAttribute::Timestamp, {5, 6}},
             {MessageAttribute::RefNo, {11, 8}},
@@ -100,7 +118,7 @@ inline const std::unordered_map<char,std::unordered_map<MessageAttribute, std::p
     },
     {
         // Order Replace Message
-        'U', 
+        MessageType::OrderReplace, 
         {
             {MessageAttribute::Timestamp, {5, 6}},
             {MessageAttribute::RefNo, {11, 8}},
@@ -111,7 +129,7 @@ inline const std::unordered_map<char,std::unordered_map<MessageAttribute, std::p
     },
     {
         // Trade Message (Non-Cross)
-        'P', 
+        MessageType::Trade, 
         {
             {MessageAttribute::StockLocale, {1, 2}},
             {MessageAttribute::Timestamp, {5, 6}},
@@ -122,7 +140,7 @@ inline const std::unordered_map<char,std::unordered_map<MessageAttribute, std::p
     },
     {
         // Cross Trade Message 
-        'Q', 
+        MessageType::CrossTrade, 
         {
             {MessageAttribute::StockLocale, {1, 2}},
             {MessageAttribute::Timestamp, {5, 6}},
@@ -133,7 +151,7 @@ inline const std::unordered_map<char,std::unordered_map<MessageAttribute, std::p
     },
     {
         // Broken Trade / Order ExecutionMessage
-        'B', 
+        MessageType::Trade, 
         {
             {MessageAttribute::Timestamp, {5, 6}},
             {MessageAttribute::MatchNo, {11, 8}}
