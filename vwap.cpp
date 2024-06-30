@@ -3,6 +3,7 @@
 #include <format>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <chrono>
 #include "constants.h"
 #include "parse_util.h"
@@ -52,8 +53,100 @@ struct Transaction
     uint32_t shares;
     float price;
     uint64_t timestamp;
-};
+}; 
 
+class MessageWrapper
+{
+
+    const unordered_map<MessageAttribute, pair<uint8_t, uint8_t>>* attributes_map;
+    char* bytes;
+    char type;
+
+    MessageWrapper () = delete;
+
+    MessageWrapper (char* bytes): bytes{bytes} 
+    {
+        type = bytes[0];
+        attributes_map = &GLOBAL_ATTRIBUTE_MAP.at(type);
+    }
+
+    pair<uint8_t, uint8_t> getAttributeOffsetAndSize(MessageAttribute attribute) const
+    {
+        if(attributes_map->find(attribute) == attributes_map->end())
+        {
+            throw ("Invalid Attribute");
+        }
+        return attributes_map->at(attribute);
+    }
+
+    template<typename T>
+    T getUIntAttribute(MessageAttribute attribute) const
+    {
+        auto pair = getAttributeOffsetAndSize(attribute);
+        return parse_uint<T>(bytes + pair.first, pair.second);
+    }
+
+public:
+
+    char getType () const
+    {
+        return type;
+    }
+
+    uint64_t getTimestamp () const
+    {
+        return getUIntAttribute<uint64_t>(MessageAttribute::Timestamp);
+    }
+
+    uint64_t getRefNo () const
+    {
+        return getUIntAttribute<uint64_t>(MessageAttribute::RefNo);
+    }
+
+    uint64_t getNewRefNo () const
+    {
+        return getUIntAttribute<uint64_t>(MessageAttribute::NewRefNo);
+    }
+    
+    uint64_t getMatchNo () const
+    {
+        return getUIntAttribute<uint64_t>(MessageAttribute::MatchNo);
+    }
+
+    int32_t getShares () const
+    {
+        return getUIntAttribute<uint32_t>(MessageAttribute::Shares);
+    }
+
+    uint64_t getLongShares () const
+    {
+        return getUIntAttribute<uint64_t>(MessageAttribute::LongShares);
+    }
+
+    string getStock () const
+    {
+        
+        auto pair = getAttributeOffsetAndSize(MessageAttribute::Stock);
+        return string(bytes + pair.first, pair.second);
+    }
+
+    uint16_t getStockLocale () const
+    {
+        return getUIntAttribute<uint16_t>(MessageAttribute::StockLocale);
+    }
+
+    uint32_t getPrice () const
+    {
+        return getUIntAttribute<uint32_t>(MessageAttribute::Price);
+    }
+
+    bool isPrintable () const
+    {   
+        auto printable = getUIntAttribute<char>(MessageAttribute::Printable);
+        return printable == 'Y';
+    }
+
+};
 
 class MessageStream 
 {
@@ -62,15 +155,10 @@ class MessageStream
     char buffer[BUFFER_SIZE];
     unordered_map<char, long long> counter_by_type  = unordered_map<char, long long>{};
 
-
-    void process_message (char* bytes, int size)
+    void processMessage (char* bytes)
     {
         static uint64_t prev_time = 0;
         char type = bytes[2];
-        char message[size];
-        for (int i=0; i < size; i++) {
-            message[i] = bytes[i];
-        }
         if(counter_by_type.find(type) == counter_by_type.end())
         {
             counter_by_type[type] = 1;
@@ -79,6 +167,7 @@ class MessageStream
         {
             counter_by_type[type]++;
         }
+        cout << "It prints" << endl;
         uint64_t time = parse_uint<uint64_t>(&bytes[7], 6);
         if(time < prev_time){
             cout << time << " < " << prev_time << endl;
@@ -86,7 +175,7 @@ class MessageStream
         prev_time = time;
     }
 
-    void proccess_buffer ()
+    void processBuffer ()
     {
         static char incomplete_msg[MAX_MESSAGE_SIZE];
         static int incomplete_msg_offset = 0;
@@ -99,7 +188,7 @@ class MessageStream
             copy(buffer, buffer + MAX_MESSAGE_SIZE - incomplete_msg_offset, incomplete_msg + incomplete_msg_offset);
             // size is not part of the message length and it takes 2 bytes
             size = parse_uint<uint16_t>(incomplete_msg) + 2;
-            process_message(incomplete_msg, size);
+            processMessage(incomplete_msg);
         }
 
         // process new messages
@@ -118,7 +207,7 @@ class MessageStream
                 incomplete_msg_offset = BUFFER_SIZE - begin;
                 break;
             } 
-            process_message(&buffer[begin], size);
+            processMessage(&buffer[begin]);
             begin = next_begin;
         }
         // the size was incomplete, edge case
@@ -129,8 +218,6 @@ class MessageStream
         }
     }
     
-
-
 public:
     unordered_map<char, int> message_counter;
     long long int counter = 0;
@@ -140,12 +227,12 @@ public:
         file.open(file_name, ios::binary | ios::in);
     }
 
-    void start_processing () 
+    void startProcessing () 
     {
         while (!file.eof()) 
         {
             file.read(buffer, BUFFER_SIZE);
-            proccess_buffer();
+            processBuffer();
         }
     }
 };
@@ -155,7 +242,7 @@ int main()
     string file_name = "input";
     MessageStream ms{file_name};
     auto start = high_resolution_clock::now();
-    ms.start_processing();
+    ms.startProcessing();
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<seconds>(stop - start);
     cout << "Total: " << ms.counter << endl;
