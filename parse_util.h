@@ -11,3 +11,4 @@ T parse_uint (char* bytes, int size = sizeof(T))
     }
     return result;
 }
+
