@@ -148,7 +148,7 @@ public:
 
 };
 
-class DataIngester
+class BinaryIngester
 {
 
     ifstream file;
@@ -222,7 +222,7 @@ public:
     unordered_map<char, int> message_counter;
     long long int counter = 0;
 
-    DataIngester (string file_name) 
+    BinaryIngester (string file_name) 
     {
         file.open(file_name, ios::binary | ios::in);
     }
@@ -240,11 +240,11 @@ public:
 int main() 
 {
     string file_name = "input";
-    DataIngester di{file_name};
+    BinaryIngester bi{file_name};
     auto start = high_resolution_clock::now();
-    di.startProcessing();
+    bi.startProcessing();
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<seconds>(stop - start);
-    cout << "Total: " << di.counter << endl;
+    cout << "Total: " << bi.counter << endl;
     cout << "Time: " << duration.count() << " seconds" << endl;
 }
