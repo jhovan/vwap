@@ -54,16 +54,18 @@ struct Transaction
     uint64_t timestamp;
 };
 
-auto counter_by_type  = unordered_map<char, long long>{};
 
 class MessageStream 
 {
 
     ifstream file;
     char buffer[BUFFER_SIZE];
+    unordered_map<char, long long> counter_by_type  = unordered_map<char, long long>{};
+
 
     void process_message (char* bytes, int size)
     {
+        static uint64_t prev_time = 0;
         char type = bytes[2];
         char message[size];
         for (int i=0; i < size; i++) {
@@ -78,6 +80,10 @@ class MessageStream
             counter_by_type[type]++;
         }
         uint64_t time = parse_uint<uint64_t>(&bytes[7], 6);
+        if(time < prev_time){
+            cout << time << " < " << prev_time << endl;
+        }
+        prev_time = time;
     }
 
     void proccess_buffer ()
@@ -151,11 +157,7 @@ int main()
     auto start = high_resolution_clock::now();
     ms.start_processing();
     auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<minutes>(stop - start);
+    auto duration = duration_cast<seconds>(stop - start);
     cout << "Total: " << ms.counter << endl;
-    cout << "Time: " << duration.count() << " minutes" << endl;
-    for(const auto& elem : counter_by_type)
-    {
-        cout << elem.first << " " << elem.second << "\n";
-    }
+    cout << "Time: " << duration.count() << " seconds" << endl;
 }
