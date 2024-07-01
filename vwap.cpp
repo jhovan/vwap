@@ -3,6 +3,7 @@
 #include <format>
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include <utility>
 #include <chrono>
 #include "constants.h"
@@ -171,7 +172,32 @@ class BinaryIngester
 
     ifstream file;
     char buffer[BUFFER_SIZE];
+    vector<string> directory;
     unordered_map<char, long long> counter_by_type  = unordered_map<char, long long>{};
+
+    int max = 0;
+
+    int prev = 0;
+
+    void updateDirectory(MessageWrapper message)
+    {
+        auto sl = message.getStockLocate();
+        auto stock = message.getStock();
+
+        // Directory size doesn't change
+        if (directory.size() > sl)
+        {
+            directory[sl] = stock;
+            return;
+        }
+
+        // Needs to expand the directory
+        if (directory.size() < sl)
+        {
+            directory.resize(sl);
+        }
+        directory.push_back(stock);
+    }
 
     void processMessage (MessageWrapper message)
     {
@@ -180,7 +206,7 @@ class BinaryIngester
         {
         case MessageType::StockDirectory:
         {
-            auto time = message.getTimestamp();
+            updateDirectory(message);
         }
             break;
         default:
@@ -232,12 +258,12 @@ class BinaryIngester
     }
     
 public:
-    unordered_map<char, int> message_counter;
-    long long int counter = 0;
 
     BinaryIngester (string file_name) 
     {
         file.open(file_name, ios::binary | ios::in);
+        directory = {""};
+        directory.reserve(DIRECTORY_SIZE_RESERVATION);
     }
 
     void startProcessing () 
@@ -258,6 +284,5 @@ int main()
     bi.startProcessing();
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<seconds>(stop - start);
-    cout << "Total: " << bi.counter << endl;
     cout << "Time: " << duration.count() << " seconds" << endl;
 }
