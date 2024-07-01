@@ -5,10 +5,11 @@
 
 // Sizes in Bytes
 
-inline const int BUFFER_SIZE = 64000;
+inline const u_int BUFFER_SIZE = 64000;
 
 // It corresponds to Trade message type (including 2 extra bytes to store size itself)
-inline const int MAX_MESSAGE_SIZE = 52;
+inline const uint8_t MAX_MESSAGE_SIZE = 52;
+inline const uint8_t MSG_SIZE_SIZE = 2;
 
 // Nanoseconds in 1 hour
 inline const u_int64_t  NANOSECONDS_IN_HOUR = 3600000000000;

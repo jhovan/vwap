@@ -64,17 +64,11 @@ class MessageWrapper
 
     MessageWrapper () = delete;
 
-    MessageWrapper (char* bytes): bytes{bytes} 
-    {
-        type = MessageType{bytes[0]};
-        attributes_map = &GLOBAL_ATTRIBUTE_MAP.at(type);
-    }
-
     pair<uint8_t, uint8_t> getAttributeOffsetAndSize(MessageAttribute attribute) const
     {
-        if(attributes_map->find(attribute) == attributes_map->end())
+        if (!attributes_map || attributes_map->find(attribute) == attributes_map->end())
         {
-            throw ("Invalid Attribute");
+            throw ("Invalid Attribute or Type");
         }
         return attributes_map->at(attribute);
     }
@@ -87,6 +81,30 @@ class MessageWrapper
     }
 
 public:
+
+    // Gets the pointer to the the start of the message (size bytes included)
+    MessageWrapper (char* bytes): bytes{bytes + MSG_SIZE_SIZE} 
+    {
+
+        // test array
+        /*
+        char message[MAX_MESSAGE_SIZE];
+        for (int i=0; i < MAX_MESSAGE_SIZE; i++) {
+            message[i] = this->bytes[i];
+        }
+        */
+
+        type = MessageType{this->bytes[0]};
+        if(GLOBAL_ATTRIBUTE_MAP.find(type) != GLOBAL_ATTRIBUTE_MAP.end())
+        {
+            attributes_map = &GLOBAL_ATTRIBUTE_MAP.at(type);
+        }
+        else
+        {
+            attributes_map = nullptr;
+        }
+        
+    }
 
     MessageType getType () const
     {
@@ -155,24 +173,10 @@ class BinaryIngester
     char buffer[BUFFER_SIZE];
     unordered_map<char, long long> counter_by_type  = unordered_map<char, long long>{};
 
-    void processMessage (char* bytes)
+    void processMessage (MessageWrapper message)
     {
-        static uint64_t prev_time = 0;
-        char type = bytes[2];
-        if(counter_by_type.find(type) == counter_by_type.end())
-        {
-            counter_by_type[type] = 1;
-        }
-        else
-        {
-            counter_by_type[type]++;
-        }
-        cout << "It prints" << endl;
-        uint64_t time = parse_uint<uint64_t>(&bytes[7], 6);
-        if(time < prev_time){
-            cout << time << " < " << prev_time << endl;
-        }
-        prev_time = time;
+        auto type = message.getType();
+        auto time = message.getTimestamp();
     }
 
     void processBuffer ()
@@ -187,8 +191,8 @@ class BinaryIngester
         {
             copy(buffer, buffer + MAX_MESSAGE_SIZE - incomplete_msg_offset, incomplete_msg + incomplete_msg_offset);
             // size is not part of the message length and it takes 2 bytes
-            size = parse_uint<uint16_t>(incomplete_msg) + 2;
-            processMessage(incomplete_msg);
+            size = parse_uint<uint16_t>(incomplete_msg) + MSG_SIZE_SIZE;
+            processMessage(MessageWrapper{incomplete_msg});
         }
 
         // process new messages
@@ -198,7 +202,7 @@ class BinaryIngester
         while (begin < BUFFER_SIZE - 1)
         {
             // size is not part of the message length and it takes 2 bytes
-            size = parse_uint<uint16_t>(&buffer[begin]) + 2;
+            size = parse_uint<uint16_t>(&buffer[begin]) + MSG_SIZE_SIZE;
             next_begin = begin + size;
             // the message is incomplete
             if(next_begin > BUFFER_SIZE)
@@ -207,7 +211,7 @@ class BinaryIngester
                 incomplete_msg_offset = BUFFER_SIZE - begin;
                 break;
             } 
-            processMessage(&buffer[begin]);
+            processMessage(MessageWrapper{buffer+begin});
             begin = next_begin;
         }
         // the size was incomplete, edge case
