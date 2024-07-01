@@ -12,7 +12,7 @@ inline const uint8_t MAX_MESSAGE_SIZE = 52;
 inline const uint8_t MSG_SIZE_SIZE = 2;
 
 // Nanoseconds in 1 hour
-inline const u_int64_t  NANOSECONDS_IN_HOUR = 3600000000000;
+inline const u_int64_t NANOSECONDS_IN_HOUR = 3600000000000;
 
 // Based on historical data from the binary (8714)
 inline const uint16_t DIRECTORY_SIZE_RESERVATION = 10000;

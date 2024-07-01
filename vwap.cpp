@@ -48,14 +48,6 @@ Lets print output, but maybe save to file if too long.
 Lets count transactions
 */
 
-
-struct Trade 
-{
-    uint32_t shares;
-    float price;
-    uint64_t timestamp;
-}; 
-
 class MessageWrapper
 {
 
@@ -117,6 +109,11 @@ public:
         return getUIntAttribute<uint64_t>(MessageAttribute::Timestamp);
     }
 
+    uint8_t getHour () const 
+    {
+        return getUIntAttribute<uint64_t>(MessageAttribute::Timestamp)/NANOSECONDS_IN_HOUR;
+    }
+
     uint64_t getRefNo () const
     {
         return getUIntAttribute<uint64_t>(MessageAttribute::RefNo);
@@ -132,14 +129,9 @@ public:
         return getUIntAttribute<uint64_t>(MessageAttribute::MatchNo);
     }
 
-    int32_t getShares () const
+    uint64_t getShares () const
     {
-        return getUIntAttribute<uint32_t>(MessageAttribute::Shares);
-    }
-
-    uint64_t getLongShares () const
-    {
-        return getUIntAttribute<uint64_t>(MessageAttribute::LongShares);
+        return getUIntAttribute<uint64_t>(MessageAttribute::Shares);
     }
 
     string getStock () const
@@ -169,15 +161,27 @@ public:
 
 class BinaryIngester
 {
+    struct Trade 
+    {
+        uint8_t hour;
+        uint16_t stock_locate;
+        // it is bigger to cover Cross Trades too
+        uint64_t shares;
+        uint32_t price;
+    }; 
+
+    struct Order
+    {
+        uint32_t shares;
+        uint32_t prices;
+    };
+    
 
     ifstream file;
     char buffer[BUFFER_SIZE];
     vector<string> directory;
-    unordered_map<char, long long> counter_by_type  = unordered_map<char, long long>{};
 
-    int max = 0;
-
-    int prev = 0;
+    //unordered_map<char, long long> counter_by_type  = unordered_map<char, long long>{};
 
     void updateDirectory(MessageWrapper message)
     {
@@ -199,15 +203,30 @@ class BinaryIngester
         directory.push_back(stock);
     }
 
+    void addOrder(MessageWrapper message)
+    {
+        //auto time = message.getHour();
+    }
+
+    void addTrade(MessageWrapper message)
+    {
+        auto time = message.getHour();
+    }
+
     void processMessage (MessageWrapper message)
     {
         auto type = message.getType();
         switch (type)
         {
         case MessageType::StockDirectory:
-        {
             updateDirectory(message);
-        }
+            break;
+        case MessageType::AddOrder:
+        case MessageType::AddOrderMPID:
+            addOrder(message);
+            break;
+        case MessageType::Trade:
+            addTrade(message);
             break;
         default:
             break;
