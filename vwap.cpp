@@ -153,7 +153,7 @@ class BinaryIngester
 
     //unordered_map<char, long long> counter_by_type  = unordered_map<char, long long>{};
 
-    void updateDirectory(MessageWrapper message)
+    void updateDirectory (MessageWrapper message)
     {
         auto stock_locate = message.getStockLocate();
         auto stock = message.getStock();
@@ -173,12 +173,29 @@ class BinaryIngester
         directory.push_back(stock);
     }
 
-    void addOrder(MessageWrapper message)
+    void addOrder (MessageWrapper message)
     {
         auto ref_no = message.getRefNo();
         auto shares = message.getShares();
         auto price = message.getPrice();
         order_book[ref_no] = Order{shares, price};
+    }
+
+    void cancelOrder (MessageWrapper message)
+    {   
+        auto ref_no = message.getRefNo();
+        auto cancelled_shares = message.getShares();
+        order_book[ref_no].shares -= cancelled_shares;
+        if (order_book[ref_no].shares <= 0)
+        {
+            order_book.erase(ref_no);
+        }
+    }
+
+    void deleteOrder (MessageWrapper message)
+    {
+        auto ref_no = message.getRefNo();
+        order_book.erase(ref_no);
     }
 
     void addTrade(MessageWrapper message)
@@ -197,6 +214,12 @@ class BinaryIngester
         case MessageType::AddOrder:
         case MessageType::AddOrderMPID:
             addOrder(message);
+            break;
+        case MessageType::OrderCancel:
+            cancelOrder(message);
+            break;
+        case MessageType::OrderDelete:
+            deleteOrder(message);
             break;
         case MessageType::Trade:
             addTrade(message);

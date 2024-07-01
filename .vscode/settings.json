@@ -53,6 +53,7 @@
         "deque": "cpp",
         "queue": "cpp",
         "stack": "cpp",
-        "type_traits": "cpp"
+        "type_traits": "cpp",
+        "utility": "cpp"
     }
 }
