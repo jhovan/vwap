@@ -221,6 +221,9 @@ class BinaryIngester
         case MessageType::OrderDelete:
             deleteOrder(message);
             break;
+        case MessageType::OrderReplace:
+            deleteOrder(message);
+            addOrder(message);
         case MessageType::Trade:
             addTrade(message);
             break;
