@@ -39,7 +39,7 @@ enum class MessageAttribute:char
     MatchNo,
     Shares,
     LongShares,
-    StockLocale,
+    StockLocate,
     Stock,
     Price,
     Printable,
@@ -51,7 +51,7 @@ inline const std::unordered_map<MessageType,std::unordered_map<MessageAttribute,
         // Stock Directory
         MessageType::StockDirectory, 
         {
-            {MessageAttribute::StockLocale, {1, 2}},
+            {MessageAttribute::StockLocate, {1, 2}},
             {MessageAttribute::Timestamp, {5, 6}},
             {MessageAttribute::Stock, {11, 8}}
         },
@@ -60,7 +60,7 @@ inline const std::unordered_map<MessageType,std::unordered_map<MessageAttribute,
         // Add Order – No MPID Attribution
         MessageType::AddOrder, 
         {
-            {MessageAttribute::StockLocale, {1, 2}},
+            {MessageAttribute::StockLocate, {1, 2}},
             {MessageAttribute::Timestamp, {5, 6}},
             {MessageAttribute::RefNo, {11, 8}},
             {MessageAttribute::Shares, {20, 4}},
@@ -71,7 +71,7 @@ inline const std::unordered_map<MessageType,std::unordered_map<MessageAttribute,
         // Add Order with MPID Attribution
         MessageType::AddOrderMPID, 
         {
-            {MessageAttribute::StockLocale, {1, 2}},
+            {MessageAttribute::StockLocate, {1, 2}},
             {MessageAttribute::Timestamp, {5, 6}},
             {MessageAttribute::RefNo, {11, 8}},
             {MessageAttribute::Shares, {20, 4}},
@@ -132,7 +132,7 @@ inline const std::unordered_map<MessageType,std::unordered_map<MessageAttribute,
         // Trade Message (Non-Cross)
         MessageType::Trade, 
         {
-            {MessageAttribute::StockLocale, {1, 2}},
+            {MessageAttribute::StockLocate, {1, 2}},
             {MessageAttribute::Timestamp, {5, 6}},
             {MessageAttribute::Shares, {20, 4}},
             {MessageAttribute::Price, {32, 4}},
@@ -143,7 +143,7 @@ inline const std::unordered_map<MessageType,std::unordered_map<MessageAttribute,
         // Cross Trade Message 
         MessageType::CrossTrade, 
         {
-            {MessageAttribute::StockLocale, {1, 2}},
+            {MessageAttribute::StockLocate, {1, 2}},
             {MessageAttribute::Timestamp, {5, 6}},
             {MessageAttribute::LongShares, {11, 8}},
             {MessageAttribute::Price, {27, 4}},

@@ -148,9 +148,9 @@ public:
         return string(bytes + pair.first, pair.second);
     }
 
-    uint16_t getStockLocale () const
+    uint16_t getStockLocate () const
     {
-        return getUIntAttribute<uint16_t>(MessageAttribute::StockLocale);
+        return getUIntAttribute<uint16_t>(MessageAttribute::StockLocate);
     }
 
     uint32_t getPrice () const
