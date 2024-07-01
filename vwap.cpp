@@ -100,12 +100,11 @@ public:
 
     uint64_t getLongShares () const
     {
-        return getUIntAttribute<uint64_t>(MessageAttribute::Shares);
+        return getUIntAttribute<uint64_t>(MessageAttribute::LongShares);
     }
 
     string getStock () const
     {
-        
         auto pair = getAttributeOffsetAndSize(MessageAttribute::Stock);
         return string(bytes + pair.first, pair.second);
     }
