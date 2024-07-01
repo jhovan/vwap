@@ -165,7 +165,7 @@ inline const std::unordered_map<MessageType,std::unordered_map<MessageAttribute,
     },
     {
         // Broken Trade / Order ExecutionMessage
-        MessageType::Trade, 
+        MessageType::BrokenTrade, 
         {
             {MessageAttribute::StockLocate, {1, 2}},
             {MessageAttribute::Timestamp, {5, 6}},

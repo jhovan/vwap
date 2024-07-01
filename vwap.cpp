@@ -134,10 +134,17 @@ class BinaryIngester
     {
         uint8_t hour;
         uint16_t stock_locate;
-        // it is bigger to support Cross Trades too
-        uint64_t shares;
+        uint32_t shares;
         uint32_t price;
     }; 
+
+    struct CrossTrade
+    {
+        uint8_t hour;
+        uint16_t stock_locate;
+        uint64_t shares;
+        uint32_t price;
+    };
 
     struct Order
     {
@@ -150,6 +157,8 @@ class BinaryIngester
     vector<string> directory;
     unordered_map<uint64_t, Order> order_book;
     unordered_map<uint64_t, Trade> trade_book;
+    unordered_map<uint64_t, CrossTrade> cross_trade_book;
+    uint8_t min_hour, max_hour, is_first_trade;
 
     //unordered_map<char, long long> counter_by_type  = unordered_map<char, long long>{};
 
@@ -198,9 +207,42 @@ class BinaryIngester
         order_book.erase(ref_no);
     }
 
+    void updateGlobalTimeBounds (uint8_t hour)
+    {
+        if (is_first_trade)
+        {
+            min_hour = hour;
+            max_hour = hour;
+            is_first_trade = false;
+        }
+        min_hour = min(hour, min_hour);
+        max_hour = max(hour, max_hour);
+    }
+
     void addTrade(MessageWrapper message)
     {
-        auto time = message.getHour();
+        auto type = message.getType();
+        auto hour = message.getHour();
+        updateGlobalTimeBounds(hour);
+        auto match_no = message.getMatchNo();
+        auto stock_locate = message.getStockLocate();
+        auto price = type == MessageType::OrderExecuted?
+            order_book[message.getRefNo()].price: message.getPrice();  
+        if  (type == MessageType::CrossTrade)
+        {
+            cross_trade_book[match_no] = CrossTrade{hour, stock_locate, message.getLongShares(), price};
+        }
+        else
+        {
+            trade_book[match_no] = Trade{hour, stock_locate, message.getShares(), price}; 
+        } 
+    }
+
+    void removeTrade(MessageWrapper message)
+    {
+        auto match_no = message.getMatchNo();
+        trade_book.erase(match_no);
+        cross_trade_book.erase(match_no);
     }
 
     void processMessage (MessageWrapper message)
@@ -215,6 +257,11 @@ class BinaryIngester
         case MessageType::AddOrderMPID:
             addOrder(message);
             break;
+        case MessageType::OrderExecuted:
+        case MessageType::OrderExecutedWithPrice:
+            addTrade(message);
+            cancelOrder(message);
+            break;
         case MessageType::OrderCancel:
             cancelOrder(message);
             break;
@@ -226,8 +273,11 @@ class BinaryIngester
             addOrder(message);
             break;
         case MessageType::Trade:
+        case MessageType::CrossTrade:
             addTrade(message);
             break;
+        case MessageType::BrokenTrade:
+            removeTrade(message);
         default:
             break;
         }
@@ -281,6 +331,7 @@ public:
     BinaryIngester (string file_name) 
     {
         file.open(file_name, ios::binary | ios::in);
+        is_first_trade = true;
         directory = {""};
         directory.reserve(DIRECTORY_SIZE_RESERVATION);
     }
