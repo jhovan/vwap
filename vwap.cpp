@@ -141,7 +141,6 @@ class BinaryIngester
 
     struct Order
     {
-        uint16_t stock_locate;
         uint32_t shares;
         uint32_t price;
     };
@@ -177,10 +176,9 @@ class BinaryIngester
     void addOrder(MessageWrapper message)
     {
         auto ref_no = message.getRefNo();
-        auto stock_locate = message.getStockLocate();
         auto shares = message.getShares();
         auto price = message.getPrice();
-        order_book[ref_no] = Order{stock_locate, shares, price};
+        order_book[ref_no] = Order{shares, price};
     }
 
     void addTrade(MessageWrapper message)

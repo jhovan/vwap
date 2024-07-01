@@ -90,6 +90,7 @@ inline const std::unordered_map<MessageType,std::unordered_map<MessageAttribute,
         // Order ExecutedMessage
         MessageType::OrderExecuted, 
         {
+            {MessageAttribute::StockLocate, {1, 2}},
             {MessageAttribute::Timestamp, {5, 6}},
             {MessageAttribute::RefNo, {11, 8}},
             {MessageAttribute::Shares, {19, 4}},
@@ -100,6 +101,7 @@ inline const std::unordered_map<MessageType,std::unordered_map<MessageAttribute,
         // Order Executed With PriceMessage
         MessageType::OrderExecutedWithPrice, 
         {
+            {MessageAttribute::StockLocate, {1, 2}},
             {MessageAttribute::Timestamp, {5, 6}},
             {MessageAttribute::RefNo, {11, 8}},
             {MessageAttribute::Shares, {19, 4}},
@@ -112,6 +114,7 @@ inline const std::unordered_map<MessageType,std::unordered_map<MessageAttribute,
         // Order Cancel Message
         MessageType::OrderCancel, 
         {
+            {MessageAttribute::StockLocate, {1, 2}},
             {MessageAttribute::Timestamp, {5, 6}},
             {MessageAttribute::RefNo, {11, 8}},
             {MessageAttribute::Shares, {19, 4}}
@@ -121,6 +124,7 @@ inline const std::unordered_map<MessageType,std::unordered_map<MessageAttribute,
         // Order Delete Message
         MessageType::OrderDelete, 
         {
+            {MessageAttribute::StockLocate, {1, 2}},
             {MessageAttribute::Timestamp, {5, 6}},
             {MessageAttribute::RefNo, {11, 8}},
         }
@@ -129,6 +133,7 @@ inline const std::unordered_map<MessageType,std::unordered_map<MessageAttribute,
         // Order Replace Message
         MessageType::OrderReplace, 
         {
+            {MessageAttribute::StockLocate, {1, 2}},
             {MessageAttribute::Timestamp, {5, 6}},
             {MessageAttribute::RefNo, {11, 8}},
             {MessageAttribute::NewRefNo, {19, 8}},
@@ -162,6 +167,7 @@ inline const std::unordered_map<MessageType,std::unordered_map<MessageAttribute,
         // Broken Trade / Order ExecutionMessage
         MessageType::Trade, 
         {
+            {MessageAttribute::StockLocate, {1, 2}},
             {MessageAttribute::Timestamp, {5, 6}},
             {MessageAttribute::MatchNo, {11, 8}}
         }
