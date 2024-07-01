@@ -176,7 +176,16 @@ class BinaryIngester
     void processMessage (MessageWrapper message)
     {
         auto type = message.getType();
-        auto time = message.getTimestamp();
+        switch (type)
+        {
+        case MessageType::StockDirectory:
+        {
+            auto time = message.getTimestamp();
+        }
+            break;
+        default:
+            break;
+        }
     }
 
     void processBuffer ()
