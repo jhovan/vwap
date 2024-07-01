@@ -12,42 +12,6 @@
 using namespace std;
 using namespace std::chrono;
 
-
-/*
-Read again about the different types of Order and Trade messages
-Particularly 1.3, 1.5 and 1.5
-To decide which messages are actually relevant
-
-I will probably have to use a buffer, like the CTC problem
-Because I can't define different size arrays without using high level
-Data structures and passing them around.
-
-I can also just read size and type,
-and load the whole message if relevant.
-
-
-Idea
-
-2 parallel processes:
-
-1. read file and enqueue transaction messages
-2. process messages in the queue, what if queue runs out of memory? 
-// reading takes more time than processing
-// except if we are printing too much
-
-// I think skiping messages makes sense, and just trying threads if too slow.
-
-
-Will I have to remember transactions ids?
-Storage concern in that case.
-
-Dictionary by stock and vwap.
-
-Lets print output, but maybe save to file if too long.
-
-Lets count transactions
-*/
-
 class MessageWrapper
 {
 
@@ -129,7 +93,12 @@ public:
         return getUIntAttribute<uint64_t>(MessageAttribute::MatchNo);
     }
 
-    uint64_t getShares () const
+    uint32_t getShares () const
+    {
+        return getUIntAttribute<uint32_t>(MessageAttribute::Shares);
+    }
+
+    uint64_t getLongShares () const
     {
         return getUIntAttribute<uint64_t>(MessageAttribute::Shares);
     }
@@ -165,47 +134,53 @@ class BinaryIngester
     {
         uint8_t hour;
         uint16_t stock_locate;
-        // it is bigger to cover Cross Trades too
+        // it is bigger to support Cross Trades too
         uint64_t shares;
         uint32_t price;
     }; 
 
     struct Order
     {
+        uint16_t stock_locate;
         uint32_t shares;
-        uint32_t prices;
+        uint32_t price;
     };
-    
 
     ifstream file;
     char buffer[BUFFER_SIZE];
     vector<string> directory;
+    unordered_map<uint64_t, Order> order_book;
+    unordered_map<uint64_t, Trade> trade_book;
 
     //unordered_map<char, long long> counter_by_type  = unordered_map<char, long long>{};
 
     void updateDirectory(MessageWrapper message)
     {
-        auto sl = message.getStockLocate();
+        auto stock_locate = message.getStockLocate();
         auto stock = message.getStock();
 
         // Directory size doesn't change
-        if (directory.size() > sl)
+        if (directory.size() > stock_locate)
         {
-            directory[sl] = stock;
+            directory[stock_locate] = stock;
             return;
         }
 
         // Needs to expand the directory
-        if (directory.size() < sl)
+        if (directory.size() < stock_locate)
         {
-            directory.resize(sl);
+            directory.resize(stock_locate);
         }
         directory.push_back(stock);
     }
 
     void addOrder(MessageWrapper message)
     {
-        //auto time = message.getHour();
+        auto ref_no = message.getRefNo();
+        auto stock_locate = message.getStockLocate();
+        auto shares = message.getShares();
+        auto price = message.getPrice();
+        order_book[ref_no] = Order{stock_locate, shares, price};
     }
 
     void addTrade(MessageWrapper message)
