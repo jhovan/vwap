@@ -6,6 +6,7 @@
 #include <vector>
 #include <utility>
 #include <chrono>
+#include <filesystem>
 #include "constants.h"
 #include "parse_util.h"
 
@@ -153,6 +154,7 @@ class BinaryIngester
 
     ifstream file;
     char buffer[BUFFER_SIZE];
+    float progress_increment;
     vector<string> directory;
     unordered_map<uint64_t, Order> order_book;
     unordered_map<uint64_t, Trade> trade_book;
@@ -325,12 +327,15 @@ class BinaryIngester
             incomplete_msg[0] = buffer[begin];
         }
     }
+
+
     
 public:
 
     BinaryIngester (string file_name) 
     {
         file.open(file_name, ios::binary | ios::in);
+        progress_increment = static_cast<float>(BUFFER_SIZE)/filesystem::file_size(file_name);
         is_first_trade = true;
         directory = {""};
         directory.reserve(DIRECTORY_RESERVATION_SIZE);
@@ -341,16 +346,22 @@ public:
 
     void startProcessing () 
     {
+        int buffer_counter = 0;
+        int prev_percentage = 0;
+        int percentage;
         while (!file.eof()) 
-        {
+        {   
             file.read(buffer, BUFFER_SIZE);
             processBuffer();
+            buffer_counter++;
+            percentage = static_cast<int>(100 * progress_increment * buffer_counter);
+            if(percentage > prev_percentage)
+            {
+                cout << "Processing File: " << percentage << "%" << endl;
+            }
+            prev_percentage = percentage;
         }
-        int cross_trades = cross_trade_book.size();
-        int orders = order_book.size();
-        int trades = trade_book.size();
-        int directories = directory.size();
-        cross_trades = cross_trade_book.size();
+        int x;
     }
 };
 
