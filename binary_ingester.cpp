@@ -100,16 +100,16 @@ void BinaryIngester::processMessage (MessageWrapper message)
         if(!message.isPrintable()) break;
     case MessageType::OrderExecuted:
         addTrade(message);
-        cancelOrder(message);
+        //cancelOrder(message);
         break;
     case MessageType::OrderCancel:
-        cancelOrder(message);
+        //cancelOrder(message);
         break;
     case MessageType::OrderDelete:
-        deleteOrder(message);
+        //deleteOrder(message);
         break;
     case MessageType::OrderReplace:
-        deleteOrder(message);
+        //deleteOrder(message);
         addOrder(message);
         break;
     case MessageType::Trade:
