@@ -161,7 +161,7 @@ class BinaryIngester
 
     //unordered_map<char, long long> counter_by_type  = unordered_map<char, long long>{};
 
-    void updateDirectory (MessageWrapper message)
+    void updateDirectory (MessageWrapper& message)
     {
         auto stock_locate = message.getStockLocate();
         auto stock = message.getStock();
@@ -181,7 +181,7 @@ class BinaryIngester
         directory.push_back(stock);
     }
 
-    void addOrder (MessageWrapper message)
+    void addOrder (MessageWrapper& message)
     {
         auto ref_no = message.getRefNo();
         auto shares = message.getShares();
@@ -189,7 +189,7 @@ class BinaryIngester
         order_book[ref_no] = Order{shares, price};
     }
 
-    void cancelOrder (MessageWrapper message)
+    void cancelOrder (MessageWrapper& message)
     {   
         auto ref_no = message.getRefNo();
         auto cancelled_shares = message.getShares();
@@ -200,7 +200,7 @@ class BinaryIngester
         }
     }
 
-    void deleteOrder (MessageWrapper message)
+    void deleteOrder (MessageWrapper& message)
     {
         auto ref_no = message.getRefNo();
         order_book.erase(ref_no);
@@ -218,7 +218,7 @@ class BinaryIngester
         max_hour = max(hour, max_hour);
     }
 
-    void addTrade(MessageWrapper message)
+    void addTrade(MessageWrapper& message)
     {
         auto type = message.getType();
         auto hour = message.getHour();
@@ -237,7 +237,7 @@ class BinaryIngester
         } 
     }
 
-    void removeTrade(MessageWrapper message)
+    void removeTrade(MessageWrapper& message)
     {
         auto match_no = message.getMatchNo();
         trade_book.erase(match_no);
@@ -343,6 +343,10 @@ public:
             file.read(buffer, BUFFER_SIZE);
             processBuffer();
         }
+        int cross_trades = cross_trade_book.size();
+        int orders = order_book.size();
+        int trades = trade_book.size();
+        cross_trades = cross_trade_book.size();
     }
 };
 
