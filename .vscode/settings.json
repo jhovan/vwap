@@ -55,6 +55,8 @@
         "stack": "cpp",
         "type_traits": "cpp",
         "utility": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "filesystem": "cpp",
+        "unordered_set": "cpp"
     }
 }
