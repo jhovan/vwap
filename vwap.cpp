@@ -333,7 +333,10 @@ public:
         file.open(file_name, ios::binary | ios::in);
         is_first_trade = true;
         directory = {""};
-        directory.reserve(DIRECTORY_SIZE_RESERVATION);
+        directory.reserve(DIRECTORY_RESERVATION_SIZE);
+        order_book.reserve(ORDER_BOOK_RESERVATION_SIZE);
+        trade_book.reserve(TRADE_BOOK_RESERVATION_SIZE);
+        cross_trade_book.reserve(CROSS_TRADE_BOOK_RESERVATION_SIZE);
     }
 
     void startProcessing () 
@@ -346,6 +349,7 @@ public:
         int cross_trades = cross_trade_book.size();
         int orders = order_book.size();
         int trades = trade_book.size();
+        int directories = directory.size();
         cross_trades = cross_trade_book.size();
     }
 };

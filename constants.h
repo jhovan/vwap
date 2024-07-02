@@ -14,13 +14,14 @@ inline const uint8_t MSG_SIZE_SIZE = 2;
 // Nanoseconds in 1 hour
 inline const u_int64_t NANOSECONDS_IN_HOUR = 3600000000000;
 
-// Based on historical data from the binary (8714)
-inline const uint16_t DIRECTORY_SIZE_RESERVATION = 10000;
+// Based on historical data from the binary 
+inline const uint16_t DIRECTORY_RESERVATION_SIZE = 10000;
+inline const uint32_t ORDER_BOOK_RESERVATION_SIZE = 30000000;
+inline const uint32_t TRADE_BOOK_RESERVATION_SIZE = 10000000;
+inline const uint16_t CROSS_TRADE_BOOK_RESERVATION_SIZE = 20000;
 
 // StockLocate values start with from 1
 inline const uint8_t DIRECTORY_OFFSET =  1;
-// TODO Update: locate_offset
-// TODO Time_offset
 
 // Relevant Message 
 enum class MessageType:char 
