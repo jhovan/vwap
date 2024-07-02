@@ -7,6 +7,7 @@
 #include <utility>
 #include <chrono>
 #include <filesystem>
+#include <omp.h>
 #include "constants.h"
 #include "parse_util.h"
 
@@ -328,7 +329,38 @@ class BinaryIngester
         }
     }
 
-
+    double* generate_vwap ()
+    {
+        int time_range = max_hour - min_hour + 1;
+        double vwap[time_range][directory.size()]{};
+        long long total_shares[time_range][directory.size()]{};
+        for (auto it: trade_book) {
+            Trade& t = it.second;
+            // the price has 4 implicit decimal positions
+            vwap[t.hour - min_hour][t.stock_locate] += t.shares * (t.price/10000.0);
+            total_shares[t.hour - min_hour][t.stock_locate] += t.shares;
+        }
+        for (auto it: cross_trade_book) {
+            CrossTrade& t = it.second;
+            vwap[t.hour - min_hour][t.stock_locate] += t.shares * (t.price/10000.0);
+            total_shares[t.hour - min_hour][t.stock_locate] += t.shares;
+        }
+        for (int stock = 1; stock < directory.size(); stock++)
+        {
+            vwap[1][stock] += vwap[0][stock];
+            vwap[0][stock] = vwap[0][stock]/total_shares[0][stock];
+            for (int hour = 1; hour < time_range - 1; hour++)
+            {
+                vwap[hour + 1][stock] += vwap[hour][stock];
+                total_shares[hour][stock] += total_shares[hour - 1][stock];
+                vwap[hour][stock] = vwap[hour][stock]/total_shares[hour][stock];
+            }
+            int last_hour = time_range - 1;
+            total_shares[last_hour][stock] += total_shares[last_hour - 1][stock];
+            vwap[last_hour][stock] = vwap[last_hour][stock]/total_shares[last_hour][stock];
+        }
+        return vwap;
+    }
     
 public:
 
@@ -361,7 +393,7 @@ public:
             }
             prev_percentage = percentage;
         }
-        int x;
+        generate_vwap();
     }
 };
 
