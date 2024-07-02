@@ -5,7 +5,7 @@
 
 // Sizes in Bytes
 
-inline const u_int BUFFER_SIZE = 64000;
+inline const uint16_t BUFFER_SIZE = 64000;
 
 // It corresponds to Trade message type (including 2 extra bytes to store size itself)
 inline const uint8_t MAX_MESSAGE_SIZE = 52;

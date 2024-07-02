@@ -256,8 +256,9 @@ class BinaryIngester
         case MessageType::AddOrderMPID:
             addOrder(message);
             break;
-        case MessageType::OrderExecuted:
         case MessageType::OrderExecutedWithPrice:
+            if(!message.isPrintable()) break;
+        case MessageType::OrderExecuted:
             addTrade(message);
             cancelOrder(message);
             break;

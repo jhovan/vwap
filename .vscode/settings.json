@@ -54,6 +54,7 @@
         "queue": "cpp",
         "stack": "cpp",
         "type_traits": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "chrono": "cpp"
     }
 }
