@@ -7,127 +7,12 @@
 #include <utility>
 #include <chrono>
 #include <filesystem>
-#include <omp.h>
 #include "constants.h"
 #include "parse_util.h"
+#include "message_wrapper.h"
 
 using namespace std;
 using namespace std::chrono;
-
-class MessageWrapper
-{
-
-    const unordered_map<MessageAttribute, pair<uint8_t, uint8_t>>* attributes_map;
-    MessageType type;
-    char* bytes;
-
-    MessageWrapper () = delete;
-
-    pair<uint8_t, uint8_t> getAttributeOffsetAndSize(MessageAttribute attribute) const
-    {
-        if (!attributes_map || attributes_map->find(attribute) == attributes_map->end())
-        {
-            throw ("Invalid Attribute or Type");
-        }
-        return attributes_map->at(attribute);
-    }
-
-    template<typename T>
-    T getUIntAttribute(MessageAttribute attribute) const
-    {
-        auto pair = getAttributeOffsetAndSize(attribute);
-        return parse_uint<T>(bytes + pair.first, pair.second);
-    }
-
-public:
-
-    // Gets the pointer to the the start of the message (size bytes included)
-    MessageWrapper (char* bytes): bytes{bytes + MSG_SIZE_SIZE} 
-    {
-
-        // test array
-        /*
-        char message[MAX_MESSAGE_SIZE];
-        for (int i=0; i < MAX_MESSAGE_SIZE; i++) {
-            message[i] = this->bytes[i];
-        }
-        */
-
-        type = MessageType{this->bytes[0]};
-        if(GLOBAL_ATTRIBUTE_MAP.find(type) != GLOBAL_ATTRIBUTE_MAP.end())
-        {
-            attributes_map = &GLOBAL_ATTRIBUTE_MAP.at(type);
-        }
-        else
-        {
-            attributes_map = nullptr;
-        }
-        
-    }
-
-    MessageType getType () const
-    {
-        return type;
-    }
-
-    uint64_t getTimestamp () const
-    {
-        return getUIntAttribute<uint64_t>(MessageAttribute::Timestamp);
-    }
-
-    uint8_t getHour () const 
-    {
-        return getUIntAttribute<uint64_t>(MessageAttribute::Timestamp)/NANOSECONDS_IN_HOUR;
-    }
-
-    uint64_t getRefNo () const
-    {
-        return getUIntAttribute<uint64_t>(MessageAttribute::RefNo);
-    }
-
-    uint64_t getNewRefNo () const
-    {
-        return getUIntAttribute<uint64_t>(MessageAttribute::NewRefNo);
-    }
-    
-    uint64_t getMatchNo () const
-    {
-        return getUIntAttribute<uint64_t>(MessageAttribute::MatchNo);
-    }
-
-    uint32_t getShares () const
-    {
-        return getUIntAttribute<uint32_t>(MessageAttribute::Shares);
-    }
-
-    uint64_t getLongShares () const
-    {
-        return getUIntAttribute<uint64_t>(MessageAttribute::LongShares);
-    }
-
-    string getStock () const
-    {
-        auto pair = getAttributeOffsetAndSize(MessageAttribute::Stock);
-        return string(bytes + pair.first, pair.second);
-    }
-
-    uint16_t getStockLocate () const
-    {
-        return getUIntAttribute<uint16_t>(MessageAttribute::StockLocate);
-    }
-
-    uint32_t getPrice () const
-    {
-        return getUIntAttribute<uint32_t>(MessageAttribute::Price);
-    }
-
-    bool isPrintable () const
-    {   
-        auto printable = getUIntAttribute<char>(MessageAttribute::Printable);
-        return printable == 'Y';
-    }
-
-};
 
 class BinaryIngester
 {
@@ -329,39 +214,6 @@ class BinaryIngester
         }
     }
 
-    double* generate_vwap ()
-    {
-        int time_range = max_hour - min_hour + 1;
-        double vwap[time_range][directory.size()]{};
-        long long total_shares[time_range][directory.size()]{};
-        for (auto it: trade_book) {
-            Trade& t = it.second;
-            // the price has 4 implicit decimal positions
-            vwap[t.hour - min_hour][t.stock_locate] += t.shares * (t.price/10000.0);
-            total_shares[t.hour - min_hour][t.stock_locate] += t.shares;
-        }
-        for (auto it: cross_trade_book) {
-            CrossTrade& t = it.second;
-            vwap[t.hour - min_hour][t.stock_locate] += t.shares * (t.price/10000.0);
-            total_shares[t.hour - min_hour][t.stock_locate] += t.shares;
-        }
-        for (int stock = 1; stock < directory.size(); stock++)
-        {
-            vwap[1][stock] += vwap[0][stock];
-            vwap[0][stock] = vwap[0][stock]/total_shares[0][stock];
-            for (int hour = 1; hour < time_range - 1; hour++)
-            {
-                vwap[hour + 1][stock] += vwap[hour][stock];
-                total_shares[hour][stock] += total_shares[hour - 1][stock];
-                vwap[hour][stock] = vwap[hour][stock]/total_shares[hour][stock];
-            }
-            int last_hour = time_range - 1;
-            total_shares[last_hour][stock] += total_shares[last_hour - 1][stock];
-            vwap[last_hour][stock] = vwap[last_hour][stock]/total_shares[last_hour][stock];
-        }
-        return vwap;
-    }
-    
 public:
 
     BinaryIngester (string file_name) 
@@ -376,7 +228,7 @@ public:
         cross_trade_book.reserve(CROSS_TRADE_BOOK_RESERVATION_SIZE);
     }
 
-    void startProcessing () 
+    void processBinary () 
     {
         int buffer_counter = 0;
         int prev_percentage = 0;
@@ -393,7 +245,67 @@ public:
             }
             prev_percentage = percentage;
         }
-        generate_vwap();
+        file.close();
+    }
+
+    void save_vwap_to_cvs (string output_file_name = "output.csv"){
+
+        int time_range = max_hour - min_hour + 1;
+        double vwap[time_range][directory.size()];
+        long long total_shares[time_range][directory.size()];
+        // Initialize Arrays
+        for (int stock = 0; stock < directory.size(); stock++)
+        {
+            for (int hour = 0; hour < time_range - 1; hour++)
+            {
+                vwap[hour][stock] = 0;
+                total_shares[hour][stock] = 0;
+            }
+        }
+        for (auto it: trade_book) {
+            Trade& t = it.second;
+            // the price has 4 implicit decimal positions
+            vwap[t.hour - min_hour][t.stock_locate] += t.shares * (t.price/10000.0);
+            total_shares[t.hour - min_hour][t.stock_locate] += t.shares;
+        }
+        for (auto it: cross_trade_book) {
+            CrossTrade& t = it.second;
+            // the price has 4 implicit decimal positions
+            vwap[t.hour - min_hour][t.stock_locate] += t.shares * (t.price/10000.0);
+            total_shares[t.hour - min_hour][t.stock_locate] += t.shares;
+        }
+        for (int stock = 1; stock < directory.size(); stock++)
+        {
+            vwap[1][stock] += vwap[0][stock];
+            vwap[0][stock] = total_shares[0][stock]?vwap[0][stock]/total_shares[0][stock]: 0;
+            for (int hour = 1; hour < time_range - 1; hour++)
+            {
+                vwap[hour + 1][stock] += vwap[hour][stock];
+                total_shares[hour][stock] += total_shares[hour - 1][stock];
+                vwap[hour][stock] = total_shares[hour][stock]?vwap[hour][stock]/total_shares[hour][stock]: 0;
+            }
+            int last_hour = time_range - 1;
+            total_shares[last_hour][stock] += total_shares[last_hour - 1][stock];
+            vwap[last_hour][stock] = total_shares[last_hour][stock]?vwap[last_hour][stock]/total_shares[last_hour][stock]: 0;
+        }
+
+        ofstream output_file;
+        output_file.open(output_file_name, ios::out|ios::trunc);
+        output_file << ",";
+        for (int i = 0; i < time_range; i++) 
+        {
+            output_file << i + min_hour <<":00,";
+        }
+        output_file << '\n';
+        for (int i = 0; i < directory.size(); i++) 
+        {
+            output_file << directory[i] <<",";
+            for (int j = 0; j < time_range; j++)
+                output_file << vwap[j][i] <<',';
+            output_file << '\n';
+        }
+        output_file.close();
+        cout << "VWAP exported to " << output_file_name << endl;
     }
 };
 
@@ -402,7 +314,8 @@ int main()
     string file_name = "input";
     BinaryIngester bi{file_name};
     auto start = high_resolution_clock::now();
-    bi.startProcessing();
+    bi.processBinary();
+    bi.save_vwap_to_cvs();
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<seconds>(stop - start);
     cout << "Time: " << duration.count() << " seconds" << endl;
